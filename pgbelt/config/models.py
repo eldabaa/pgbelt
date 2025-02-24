@@ -40,7 +40,16 @@ class User(BaseModel):
 
     _not_empty = field_validator("name", "pw")(not_empty)
 
+class IncludeExcludeLists(BaseModel):
+    """
+    Represents a object that includes the include and the exclude lists.
 
+    include: list of string.
+    exclude: list of string.
+    """
+    
+    include: list[str]
+    exclude: list[str]
 class DbConfig(BaseModel):
     """
     Represents a postgres db instance.
@@ -124,8 +133,8 @@ class DbupgradeConfig(BaseModel):
     dc: str
     src: Optional[DbConfig] = None
     dst: Optional[DbConfig] = None
-    tables: Optional[list[str]] = None
-    sequences: Optional[list[str]] = None
+    tables: Optional[IncludeExcludeLists] = None
+    sequences: Optional[IncludeExcludeLists] = None
     schema_name: Optional[str] = "public"
 
     _not_empty = field_validator("db", "dc")(not_empty)

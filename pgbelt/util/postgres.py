@@ -4,6 +4,7 @@ from decimal import Decimal
 from asyncpg import Pool
 from asyncpg import Record
 from asyncpg.exceptions import UndefinedObjectError
+from pgbelt.config.models import IncludeExcludeLists
 
 
 async def dump_sequences(
@@ -359,8 +360,8 @@ async def precheck_info(
     pool: Pool,
     root_name: str,
     owner_name: str,
-    target_tables: list[str],
-    target_sequences: list[str],
+    target_tables: IncludeExcludeLists,
+    target_sequences: IncludeExcludeLists,
     schema: str,
     logger: Logger,
 ) -> dict:
@@ -409,10 +410,11 @@ async def precheck_info(
         ORDER BY 1,2;"""
     )
 
-    # We filter the table list if the user has specified a list of tables to target.
-    if target_tables:
-
-        result["tables"] = [t for t in result["tables"] if t["Name"] in target_tables]
+    # We filter the table list if the user has specified a list of tables to include or to exclude.
+    if target_tables.include:
+        result["tables"] = [t for t in result["tables"] if t["Name"] in target_tables.include]
+    else:
+        result["tables"] = [t for t in result["tables"] if t["Name"] not in target_tables.exclude]
 
         # We will not recapitalize the table names in the result["tables"] list,
         # to preserve how Postgres sees those tables in its system catalog. Easy
@@ -435,13 +437,15 @@ async def precheck_info(
         ORDER BY 1,2;"""
     )
 
-    # We filter the table list if the user has specified a list of tables to target.
-    if target_sequences:
-
+    # We filter the table list if the user has specified a list of tables to include or to exclude.
+    if target_sequences.include:
         result["sequences"] = [
             t for t in result["sequences"] if t["Name"] in target_sequences
         ]
-
+    else:
+        result["sequences"] = [
+            t for t in result["sequences"] if t["Name"] not in target_sequences
+        ]
         # We will not recapitalize the table names in the result["tables"] list,
         # to preserve how Postgres sees those tables in its system catalog. Easy
         # rabbit hole later if we keep patching the table names to match the user's

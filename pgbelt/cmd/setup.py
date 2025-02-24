@@ -40,8 +40,10 @@ async def _setup_src_node(
         )
 
     pglogical_tables = pkey_tables
-    if conf.tables:
-        pglogical_tables = [t for t in pkey_tables if t in conf.tables]
+    if conf.tables.include:
+        pglogical_tables = [t for t in pkey_tables if t in conf.tables.include]
+    else:
+        pglogical_tables = [t for t in pkey_tables if t not in conf.tables.exclude]
 
     # Intentionally throw an error if no tables are found, so that the user can correct their config.
     # When reported by a certain user, errors showed when running the status command, but it was ignored,
@@ -153,8 +155,10 @@ async def setup_back_replication(config_future: Awaitable[DbupgradeConfig]) -> N
         dst_logger = get_logger(conf.db, conf.dc, "setup.src")
 
         pglogical_tables = pkeys
-        if conf.tables:
-            pglogical_tables = [t for t in pkeys if t in conf.tables]
+        if conf.tables.include:
+            pglogical_tables = [t for t in pkeys if t in conf.tables.include]
+        else:
+            pglogical_tables = [t for t in pkeys if t not in conf.tables.exclude]
 
         await configure_replication_set(
             dst_root_pool, pglogical_tables, conf.schema_name, dst_logger
